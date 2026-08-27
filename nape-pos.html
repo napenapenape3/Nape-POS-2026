@@ -45,7 +45,7 @@ main{padding:12px 12px 190px}
   font-size:13px;white-space:nowrap;color:var(--dim)}
 .cat[aria-pressed="true"]{background:var(--text);color:var(--ink);border-color:var(--text);font-weight:700}
 
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px}
 .card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
   overflow:hidden;text-align:left;display:flex;flex-direction:column;transition:transform .08s}
 .card:active{transform:scale(.96)}
@@ -89,7 +89,7 @@ main{padding:12px 12px 190px}
   flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:var(--line)}
 .vh .n b{display:block;font-size:16px;font-weight:600}
 .vh .n small{color:var(--dim);font-size:13px}
-.vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:8px;margin-bottom:14px}
 .vbtn{position:relative;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
   padding:10px 6px 12px;text-align:center;transition:transform .08s;overflow:hidden}
 .vbtn:active{transform:scale(.94)}
@@ -220,6 +220,13 @@ main{padding:12px 12px 190px}
 .cf-row .n small{color:var(--dim);font-size:14px}
 .cf-row .q{font-size:17px;color:var(--dim);width:44px;text-align:right}
 .cf-row .a{font-size:17px;font-weight:700;width:92px;text-align:right}
+.cf-step{display:flex;align-items:center;gap:2px;background:var(--surface-2);border-radius:11px;flex:0 0 auto}
+.cf-step button{width:42px;height:40px;font-size:21px;font-weight:700;color:var(--text)}
+.cf-step button:active{opacity:.6}
+.cf-step b{min-width:26px;text-align:center;font-size:17px}
+.vminus{position:absolute;top:-6px;left:-6px;width:24px;height:24px;border-radius:99px;
+  background:var(--surface);border:1px solid var(--line);color:var(--text);
+  display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;z-index:3}
 .cf-foot{padding:18px 20px calc(18px + var(--safe-b));border-top:1px solid var(--line);background:var(--surface)}
 .cf-tot{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
 .cf-tot .l{font-size:16px;color:var(--dim)}
@@ -259,10 +266,49 @@ main{padding:12px 12px 190px}
 
 .toast{position:fixed;left:12px;right:12px;bottom:calc(96px + var(--safe-b));z-index:70;
   background:var(--mint);color:#062218;border-radius:12px;padding:13px 16px;font-weight:700;font-size:14px;
-  transform:translateY(160%);transition:transform .3s cubic-bezier(.2,.9,.25,1);
+  transform:translateY(40px);opacity:0;visibility:hidden;pointer-events:none;
+  transition:transform .3s cubic-bezier(.2,.9,.25,1),opacity .22s,visibility .22s;
   display:flex;justify-content:space-between;gap:10px}
-.toast.on{transform:translateY(0)}
+.toast.on{transform:translateY(0);opacity:1;visibility:visible;pointer-events:auto}
 .toast.err{background:var(--rose);color:#2A0808}
+
+/* ---------- iPad / 大画面 ---------- */
+@media (min-width:700px){
+  body{font-size:16px}
+  header{padding-left:24px;padding-right:24px}
+  .hd{max-width:900px;margin:0 auto}
+  .total{font-size:58px}
+  .total small{font-size:28px}
+  nav{max-width:900px;margin:0 auto;padding-left:20px;padding-right:20px}
+  nav button{font-size:15px;padding:11px 0}
+  main{padding:16px 20px 200px;max-width:1100px;margin:0 auto}
+  .card .nm{font-size:14px}
+  .card .pr{font-size:19px}
+  .cat{font-size:14px;padding:9px 16px}
+  .dock{max-width:720px;margin-inline:auto;padding-left:20px;padding-right:20px}
+  .btn-cart{flex:0 0 120px;font-size:14px}
+  .btn-calc{flex:0 0 66px}
+  .btn-pay{font-size:19px;padding:16px 0}
+  .sheet{max-width:640px;margin-inline:auto;border-radius:20px 20px 0 0}
+  .sheet h2{font-size:17px;padding:20px 22px 12px}
+  .sheet-body{padding:0 22px 22px}
+  .vbtn b{font-size:22px}
+  .stat .v{font-size:22px}
+  .toast{max-width:640px;margin-inline:auto;font-size:15px}
+  .cf-head,.cf-list,.cf-foot>*{max-width:780px;margin-left:auto;margin-right:auto}
+  .cf-head{padding-left:0;padding-right:0;width:calc(100% - 48px)}
+  .cf-head .t{font-size:28px}
+  .cf-row .n b{font-size:20px}
+  .cf-row .n small{font-size:15px}
+  .cf-row img,.cf-row .ph{width:64px;height:64px}
+  .cf-tot .v{font-size:56px}
+  .cf-btns button{padding:20px 0;font-size:19px}
+  .cf-back{flex:0 0 140px}
+  .rc-paper{max-width:420px;margin-left:auto;margin-right:auto}
+}
+@media (min-width:1000px){
+  .vgrid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+}
 </style>
 </head>
 <body>
@@ -617,7 +663,11 @@ function tapProduct(pid){
   if((p.variants||[]).length) openVar(p); else add(pid+'::',1);
 }
 function add(key,d){ cart[key]=(cart[key]||0)+d; if(cart[key]<=0) delete cart[key];
-  renderHeader(); renderGrid(); renderCart(); if($('#shVar').classList.contains('on')) drawVar(); }
+  renderHeader(); renderGrid(); renderCart();
+  if($('#shVar').classList.contains('on')) drawVar();
+  if($('#shConfirm').classList.contains('on')){
+    if(!Object.keys(cart).length) closeConfirm(); else openConfirm();
+  } }
 
 /* バリエーション選択 */
 function openVar(p){ varPid=p.id; drawVar(); openSheet('#shVar'); }
@@ -629,8 +679,9 @@ function drawVar(){
   $('#vGrid').innerHTML=(p.variants||[]).map(v=>{
     const key=p.id+'::'+v.id, q=cart[key]||0, pr=v.price||p.price;
     const im=v.img?`<img class="vim" src="${v.img}" alt="">`:'';
-    return `<button class="vbtn" data-vkey="${key}">${q?`<span class="vb num">${q}</span>`:''}${im}
-      <b>${esc(v.label)}</b><small class="num">${pr===p.price?'':yen(pr)}</small></button>`;
+    return `<div class="vbtn" data-vkey="${key}" role="button" tabindex="0">
+      ${q?`<span class="vb num">${q}</span><span class="vminus" data-vminus="${key}">−</span>`:''}${im}
+      <b>${esc(v.label)}</b><small class="num">${pr===p.price?'':yen(pr)}</small></div>`;
   }).join('');
 }
 
@@ -673,7 +724,8 @@ function openConfirm(){
     const th=r.img?`<img src="${r.img}" alt="">`:`<span class="ph">▢</span>`;
     return `<div class="cf-row">${th}<span class="n"><b>${esc(r.name)}</b>
       ${r.label?`<small>${esc(r.label)}</small>`:''}</span>
-      <span class="q num">×${cart[k]}</span><span class="a num">${yen(r.price*cart[k])}</span></div>`;
+      <span class="cf-step"><button data-cm="${k}">−</button><b class="num">${cart[k]}</b><button data-cp="${k}">＋</button></span>
+      <span class="a num">${yen(r.price*cart[k])}</span></div>`;
   }).join('');
   const t=totals();
   $('#cfQty').textContent=t.qty+'点'; $('#cfTotal').textContent=yen(t.total);
@@ -1022,7 +1074,10 @@ document.addEventListener('click',e=>{
   const per=t.closest('#periods .cat'); if(per){ curPeriod=per.dataset.p;
     $$('#periods .cat').forEach(b=>b.setAttribute('aria-pressed',String(b===per))); return renderHist(); }
   const card=t.closest('.card'); if(card) return tapProduct(card.dataset.id);
+  const vmn=t.closest('[data-vminus]'); if(vmn){ e.stopPropagation(); return add(vmn.dataset.vminus,-1); }
   const vb=t.closest('[data-vkey]'); if(vb) return add(vb.dataset.vkey,1);
+  const cp=t.closest('[data-cp]'); if(cp) return add(cp.dataset.cp,1);
+  const cm=t.closest('[data-cm]'); if(cm) return add(cm.dataset.cm,-1);
   if(t.dataset.p) return add(t.dataset.p,1);
   if(t.dataset.m) return add(t.dataset.m,-1);
   if(t.closest('[data-close]')||t===$('#scrim')) return closeSheets();
@@ -1122,10 +1177,23 @@ $('#fCashCalc').addEventListener('change',()=>{ S.settings.cashCalc=$('#fCashCal
 $('#fAutoRc').addEventListener('change',()=>{ S.settings.autoRc=$('#fAutoRc').checked; save(); });
 
 $('#btnSeed').onclick=()=>{
-  if(!confirm('商品リストを公式ラインナップに入れ替えます。今の商品（入力した原価も含む）は消えます。よろしいですか？')) return;
-  S.products=officialSeed(); cart={}; save();
+  if(!confirm('商品リストを公式ラインナップ（写真つき・バリエーションまとめ済み）に入れ替えます。入力済みの原価は、商品名が一致するものだけ引き継ぎます。よろしいですか？')) return;
+  const keep={};
+  S.products.forEach(p=>{
+    const base=p.cost||0;
+    if(base) keep[p.name.trim()]=base;
+    (p.variants||[]).forEach(v=>{ const c=v.cost||base; if(c) keep[p.name.trim()+'|'+v.label]=c; });
+  });
+  const fresh=officialSeed();
+  let n=0;
+  fresh.forEach(p=>{
+    if(keep[p.name]){ p.cost=keep[p.name]; n++; }
+    (p.variants||[]).forEach(v=>{ const c=keep[p.name+'|'+v.label]; if(c){ v.cost=c; n++; } });
+  });
+  S.products=fresh; cart={}; save();
   renderCats(); renderGrid(); renderProd(); renderHeader(); renderCart();
-  switchView('prod'); toast('公式ラインナップを読み込みました');
+  switchView('prod');
+  toast(n?'読み込みました（原価 '+n+'件を引き継ぎ）':'公式ラインナップを読み込みました');
 };
 
 $('#btnBackup').onclick=()=>{
