@@ -367,7 +367,9 @@ main{padding:12px 12px 190px}
       <div class="hint" style="margin-top:6px">Square Developer で無料のアプリを作ると発行されます。</div></div>
     <div class="field"><label>戻り先URL（callback URL）</label>
       <input id="fCb" placeholder="https://例.github.io/pos/" autocapitalize="off" autocorrect="off" spellcheck="false">
-      <div class="hint" style="margin-top:6px">このページを置いた https のURL。同じURLを Square Developer の Point of Sale API 設定にも登録してください。</div></div>
+      <button class="btn-full btn-line" id="btnCbAuto" style="margin-top:8px;padding:11px;font-size:14px">このページのURLを自動で入れる</button>
+      <div class="hint" style="margin-top:8px">Square Developer の Point of Sale API → Web に、下のURLをそのまま登録してください。</div>
+      <div class="hint num" id="cbShow" style="margin-top:6px;padding:10px;background:var(--surface-2);border-radius:9px;word-break:break-all;color:var(--text)"></div></div>
     <div class="field"><label>Square に渡す決済手段</label>
       <div class="check"><input type="checkbox" id="tCREDIT_CARD" checked><label for="tCREDIT_CARD">カード / タッチ決済 / 電子マネー</label></div>
       <div class="check"><input type="checkbox" id="tOTHER"><label for="tOTHER">その他（QRコード決済など）</label></div>
@@ -386,7 +388,14 @@ main{padding:12px 12px 190px}
       <div class="hint" style="margin-top:6px">この金額以上でショッパー進呈の案内を出します。0 か空欄にすると表示しません。</div></div>
     <div class="field"><label>イベント名（レシートと書き出しに入ります）</label>
       <input id="fEvent" placeholder="9/12 ワンマンライブ"></div>
-    <button class="btn-full btn-line" id="btnSeed">公式ラインナップを読み込む</button>
+    <button class="btn-full btn-line" id="btnDefOut">今の設定を初期値用に書き出す</button>
+    <div class="hint" style="margin-top:6px">出てきたコードを、HTMLの <b>const DEFAULTS={...}</b> と差し替えてGitHubにアップし直すと、その内容が全端末の初期値になります。</div>
+    <pre id="defOut" style="display:none;white-space:pre-wrap;word-break:break-all;font-size:12px;
+      background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px;
+      margin-top:10px;-webkit-user-select:text;user-select:text;color:var(--text)"></pre>
+    <button class="btn-full btn-line" id="btnDefReset" style="margin-top:8px">設定を初期値に戻す</button>
+
+    <button class="btn-full btn-line" id="btnSeed" style="margin-top:20px">公式ラインナップを読み込む</button>
     <div class="hint" style="margin-top:6px">ポスターの9商品（写真つき）で商品リストを入れ替えます。売上履歴はそのまま残ります。</div>
     <button class="btn-full btn-line" id="btnBackup" style="margin-top:16px">商品と売上をバックアップ</button>
     <button class="btn-full btn-line" id="btnRestore" style="margin-top:8px">バックアップから復元</button>
@@ -532,6 +541,24 @@ main{padding:12px 12px 190px}
 <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastX" style="opacity:.6">✕</button></div>
 
 <script>
+/* ===== 初期設定 =====================================================
+   ここを書き換えてGitHubにアップし直すと、どの端末で開いても
+   この値が最初から入った状態になります。
+   設定タブの「今の設定を初期値用に書き出す」で、このブロックを
+   丸ごと作れます。コピーして下の DEFAULTS と差し替えてください。
+   ================================================================== */
+const DEFAULTS={
+  appId:'sq0idp-JowfjNB_s9yqKSq7v2vkww',
+  cb:'https://napenapenape3.github.io/Nape-POS-2026/nape-pos.html',
+  tenders:['CREDIT_CARD'],
+  gift:5000,
+  cashCalc:false,
+  autoRc:false,
+  mailUrl:'',
+  event:''
+};
+if(!DEFAULTS.cb) DEFAULTS.cb=location.origin+location.pathname;
+
 const KEY='nape-pos-v3';
 const store={
   async get(){
@@ -578,7 +605,7 @@ function officialSeed(){ return [
 ];}
 const SEED=officialSeed();
 
-let S={products:SEED.slice(),sales:[],settings:{appId:'',cb:'',tenders:['CREDIT_CARD'],event:''},pending:null};
+let S={products:SEED.slice(),sales:[],settings:Object.assign({},DEFAULTS),pending:null};
 let cart={},curCat='すべて',curPeriod='today',calcMode='free',calcVal='',editId=null,editImg='',editVars=[],varPid=null,rcSale=null,photoTarget=null;
 
 const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
@@ -1170,11 +1197,44 @@ $('#edDel').onclick=()=>{
 ['fAppId','fCb','fEvent','fMailUrl','fGift'].forEach(id=>$('#'+id).addEventListener('input',()=>{
   S.settings.appId=$('#fAppId').value.trim(); S.settings.cb=$('#fCb').value.trim();
   S.settings.event=$('#fEvent').value.trim(); S.settings.mailUrl=$('#fMailUrl').value.trim();
-  S.settings.gift=parseInt($('#fGift').value,10)||0; save(); }));
+  S.settings.gift=parseInt($('#fGift').value,10)||0; showCb(); save(); }));
 ['CREDIT_CARD','OTHER','SQUARE_GIFT_CARD'].forEach(t=>$('#t'+t).addEventListener('change',()=>{
   S.settings.tenders=['CREDIT_CARD','OTHER','SQUARE_GIFT_CARD'].filter(x=>$('#t'+x).checked); save(); }));
 $('#fCashCalc').addEventListener('change',()=>{ S.settings.cashCalc=$('#fCashCalc').checked; save(); });
 $('#fAutoRc').addEventListener('change',()=>{ S.settings.autoRc=$('#fAutoRc').checked; save(); });
+
+function showCb(){ $('#cbShow').textContent=S.settings.cb||DEFAULTS.cb; }
+$('#btnCbAuto').onclick=()=>{ S.settings.cb=DEFAULTS.cb; $('#fCb').value=DEFAULTS.cb;
+  showCb(); save(); toast('このページのURLを入れました'); };
+
+function fillSettingsFields(){
+  $('#fAppId').value=S.settings.appId||''; $('#fCb').value=S.settings.cb||'';
+  $('#fEvent').value=S.settings.event||''; $('#fMailUrl').value=S.settings.mailUrl||'';
+  $('#fGift').value=(S.settings.gift===undefined?5000:S.settings.gift);
+  $('#fCashCalc').checked=!!S.settings.cashCalc; $('#fAutoRc').checked=!!S.settings.autoRc;
+  ['CREDIT_CARD','OTHER','SQUARE_GIFT_CARD'].forEach(t=>$('#t'+t).checked=(S.settings.tenders||[]).includes(t));
+  showCb();
+}
+$('#btnDefOut').onclick=()=>{
+  const s=S.settings, q=v=>"'"+String(v||'').replace(/'/g,"\\'")+"'";
+  const code='const DEFAULTS={\n'
+    +'  appId:'+q(s.appId)+',\n'
+    +'  cb:'+q(s.cb)+',\n'
+    +'  tenders:['+(s.tenders||['CREDIT_CARD']).map(q).join(',')+'],\n'
+    +'  gift:'+(parseInt(s.gift,10)||0)+',\n'
+    +'  cashCalc:'+(!!s.cashCalc)+',\n'
+    +'  autoRc:'+(!!s.autoRc)+',\n'
+    +'  mailUrl:'+q(s.mailUrl)+',\n'
+    +'  event:'+q(s.event)+'\n};';
+  const el=$('#defOut'); el.textContent=code; el.style.display='block';
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(()=>toast('コピーしました'),()=>toast('長押しでコピーしてください'));
+  } else toast('長押しでコピーしてください');
+};
+$('#btnDefReset').onclick=()=>{
+  if(!confirm('設定をファイルに書かれた初期値に戻します。よろしいですか？')) return;
+  S.settings=Object.assign({},DEFAULTS); save(); fillSettingsFields(); toast('初期値に戻しました');
+};
 
 $('#btnSeed').onclick=()=>{
   if(!confirm('商品リストを公式ラインナップ（写真つき・バリエーションまとめ済み）に入れ替えます。入力済みの原価は、商品名が一致するものだけ引き継ぎます。よろしいですか？')) return;
@@ -1223,13 +1283,11 @@ $('#toastX').onclick=()=>$('#toast').classList.remove('on');
   if(!d){ const old=await store.getOld();
     if(old){ d={products:migrate(old.products),sales:old.sales,settings:old.settings,pending:old.pending}; migrated=true; } }
   if(d){ S.products=(d.products&&d.products.length)?migrate(d.products):SEED.slice();
-    S.sales=d.sales||[]; S.settings=Object.assign(S.settings,d.settings||{}); S.pending=d.pending||null; }
-  $('#fAppId').value=S.settings.appId||''; $('#fCb').value=S.settings.cb||'';
-  $('#fEvent').value=S.settings.event||''; $('#fMailUrl').value=S.settings.mailUrl||'';
-  $('#fGift').value=(S.settings.gift===undefined?5000:S.settings.gift);
-  $('#fCashCalc').checked=!!S.settings.cashCalc; $('#fAutoRc').checked=!!S.settings.autoRc;
-  ['CREDIT_CARD','OTHER','SQUARE_GIFT_CARD'].forEach(t=>$('#t'+t).checked=(S.settings.tenders||[]).includes(t));
-  renderCats(); renderGrid(); renderHeader(); renderCart(); renderHist(); renderProd();
+    S.sales=d.sales||[]; S.settings=Object.assign({},DEFAULTS,d.settings||{}); S.pending=d.pending||null; }
+  if(!S.settings.cb) S.settings.cb=DEFAULTS.cb;
+  if(!S.settings.appId&&DEFAULTS.appId) S.settings.appId=DEFAULTS.appId;
+  fillSettingsFields();
+  renderCats(); renderGrid(); renderHeader(); renderCart(); renderHist(); renderProd(); showCb();
   if(migrated){ await save(); toast('前の商品データをバリエーション形式に変換しました'); }
   handleCallback();
 })();
